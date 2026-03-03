@@ -6,10 +6,11 @@ Dieser Blueprint steuert den Solar-Überschuss auf drei verschiedene Arten. Er r
 
 ## Installation
 
-Import to your Blueprints, simply click the button below:
+Den Blueprint einfach über den Button in dein Home Assistant intrieren. Die Datei wird automatisch unter Blueprints gespeichert.
 
-<a href="https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fraw.githubusercontent.com%2Fjayjojayson%2Fpv-zero-surplus.yaml"><img width="250" alt="blueprint" src="https://github.com/user-attachments/assets/fa01530a-1d52-4b2b-b637-1269bd0cd747"></a>
-
+<a href="https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fraw.githubusercontent.com%2Fjayjojayson%2Fblueprint_pv-zero-surplus%2Fmain%2Fpv-zero-surplus.yaml">
+  <img width="250" alt="blueprint" src="https://github.com/user-attachments/assets/fa01530a-1d52-4b2b-b637-1269bd0cd747">
+</a>  
 
 > Trigger:
 > Blueprint wird bei jeder Änderung des Netzbezug-Sensors ausgeführt (außer bei "unavailable" oder "unknown").
