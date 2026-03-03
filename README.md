@@ -132,4 +132,3 @@ SONST
    - Geräte mit niedrigerer Priorität (2, 3) werden erst eingeschaltet/geregelt, wenn alle Geräte mit höherer Priorität bereits eingeschaltet sind oder ihre Maximalleistung erreicht haben
 
 5. **Hysterese:** Sowohl beim WR-Limit als auch bei Ein/Aus-Geräten verhindert die Hysterese ständiges Flattern bei kleinen Änderungen.
-
