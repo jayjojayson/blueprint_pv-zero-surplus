@@ -6,8 +6,13 @@ Dieser Blueprint steuert den Solar-Überschuss auf drei verschiedene Arten. Er r
 
 ## Installation
 
+Import to your Blueprints, simply click the button below:
+
 <a href="https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fraw.githubusercontent.com%2Fjayjojayson%2Fpv-zero-surplus.yaml"><img width="250" alt="blueprint" src="https://github.com/user-attachments/assets/fa01530a-1d52-4b2b-b637-1269bd0cd747"></a>
 
+
+> Trigger:
+> Blueprint wird bei jeder Änderung des Netzbezug-Sensors ausgeführt (außer bei "unavailable" oder "unknown").
 
 
 ---
@@ -126,10 +131,4 @@ SONST
    - Geräte mit niedrigerer Priorität (2, 3) werden erst eingeschaltet/geregelt, wenn alle Geräte mit höherer Priorität bereits eingeschaltet sind oder ihre Maximalleistung erreicht haben
 
 5. **Hysterese:** Sowohl beim WR-Limit als auch bei Ein/Aus-Geräten verhindert die Hysterese ständiges Flattern bei kleinen Änderungen.
-
----
-
-## Trigger
-
-Der Blueprint wird bei jeder Änderung des Netzbezug-Sensors ausgeführt (außer bei "unavailable" oder "unknown").
 
