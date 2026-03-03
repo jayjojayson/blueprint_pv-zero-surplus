@@ -1,0 +1,510 @@
+blueprint:
+  name: "OpenDTU Solar Surplus Control"
+  description: |
+    Controls solar surplus in three different ways:
+
+    ⚡ Inverter Limit: Dynamically adjusts the inverter power limit (zero export).
+    🔌 Device On/Off: Switches a device on or off when there is enough surplus.
+    📊 Power Control: Continuously adjusts the power of a device (e.g. heating element).
+
+    Select the desired operating mode and only fill in the settings of the corresponding section. The other sections can remain collapsed.
+
+    ⚠️ In "Inverter Limit" mode: Make sure to use the Non-Persistent entity to protect the EEPROM/Flash of the inverter!
+  domain: automation
+  author: jayjojayson
+  source_url: https://github.com/jayjojayson/ha-blueprints/blob/main/opendtu_zero_export.yaml
+  homeassistant:
+    min_version: "2024.12.0"
+  input:
+    general_section:
+      name: "🔧 General Settings"
+      input:
+        operation_mode:
+          name: Operating Mode
+          description: >
+            Choose how the solar surplus should be used.
+            Then only fill in the matching section below.
+          default: "wr_limit"
+          selector:
+            select:
+              options:
+                - label: "⚡ Adjust inverter limit (zero export)"
+                  value: "wr_limit"
+                - label: "🔌 Switch device On/Off"
+                  value: "switch_device"
+                - label: "📊 Continuously control power"
+                  value: "power_control"
+        grid_power_sensor:
+          name: Grid Power Sensor
+          description: >
+            The sensor that shows the current grid import/export in watts.
+            Positive = importing from grid, Negative = exporting to grid.
+          selector:
+            entity:
+              domain: sensor
+              device_class: power
+        inverter_power_sensor:
+          name: Inverter Power
+          description: The OpenDTU sensor that shows the current production (watts).
+          selector:
+            entity:
+              domain: sensor
+              device_class: power
+        buffer:
+          name: Buffer (Offset)
+          description: >
+            Desired remaining grid import in watts.
+            Prevents unwanted export due to measurement fluctuations.
+            Recommendation: 5–20 W.
+          default: 10
+          selector:
+            number:
+              min: 0
+              max: 100
+              unit_of_measurement: W
+
+    wr_section:
+      name: "⚡ Inverter Limit Settings"
+      description: "Only fill in if operating mode = Inverter Limit"
+      collapsed: true
+      input:
+        dtu_limit_number:
+          name: OpenDTU Limit Entity (Non-Persistent!)
+          description: >
+            ⚠️ IMPORTANT: Make sure to select the NON-PERSISTENT limit entity!
+            (e.g. number.opendtu_limit_nonpersistent_absolute)
+
+            Frequent writes will otherwise destroy the EEPROM/Flash of the
+            inverter and permanently damage it!
+          default: ""
+          selector:
+            entity:
+              domain: number
+        max_power:
+          name: Maximum Power
+          description: The maximum power of your inverter (e.g. 600 or 800).
+          default: 600
+          selector:
+            number:
+              min: 0
+              max: 2000
+              unit_of_measurement: W
+        min_power:
+          name: Minimum Power
+          description: >
+            Lower limit for the power setting (prevents the inverter from
+            being completely shut off).
+          default: 20
+          selector:
+            number:
+              min: 0
+              max: 500
+              unit_of_measurement: W
+        hysteresis:
+          name: Hysteresis
+          description: >
+            Only send if the calculated limit differs from the current limit
+            by more than this value (in watts).
+            Reduces radio traffic to the inverter.
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 50
+              unit_of_measurement: W
+
+    switch_section:
+      name: "🔌 Device On/Off Settings"
+      description: "Only fill in if operating mode = Device On/Off"
+      collapsed: true
+      input:
+        switch_entity_1:
+          name: Device 1
+          default: ""
+          selector:
+            entity:
+              domain:
+                - switch
+                - input_boolean
+                - light
+                - fan
+        switch_priority_1:
+          name: "Device 1: Priority"
+          description: "1 = highest priority (switched on first)"
+          default: 1
+          selector:
+            number:
+              min: 1
+              max: 3
+        switch_on_threshold_1:
+          name: "Device 1: Turn-on threshold (W)"
+          default: 500
+          selector:
+            number:
+              min: 50
+              max: 10000
+              unit_of_measurement: W
+        switch_off_threshold_1:
+          name: "Device 1: Turn-off threshold (W)"
+          default: 100
+          selector:
+            number:
+              min: 0
+              max: 10000
+              unit_of_measurement: W
+        switch_entity_2:
+          name: Device 2
+          default: ""
+          selector:
+            entity:
+              domain:
+                - switch
+                - input_boolean
+                - light
+                - fan
+        switch_priority_2:
+          name: "Device 2: Priority"
+          description: "1 = highest priority"
+          default: 2
+          selector:
+            number:
+              min: 1
+              max: 3
+        switch_on_threshold_2:
+          name: "Device 2: Turn-on threshold (W)"
+          default: 800
+          selector:
+            number:
+              min: 50
+              max: 10000
+              unit_of_measurement: W
+        switch_off_threshold_2:
+          name: "Device 2: Turn-off threshold (W)"
+          default: 300
+          selector:
+            number:
+              min: 0
+              max: 10000
+              unit_of_measurement: W
+        switch_entity_3:
+          name: Device 3
+          default: ""
+          selector:
+            entity:
+              domain:
+                - switch
+                - input_boolean
+                - light
+                - fan
+        switch_priority_3:
+          name: "Device 3: Priority"
+          description: "1 = highest priority"
+          default: 3
+          selector:
+            number:
+              min: 1
+              max: 3
+        switch_on_threshold_3:
+          name: "Device 3: Turn-on threshold (W)"
+          default: 1200
+          selector:
+            number:
+              min: 50
+              max: 10000
+              unit_of_measurement: W
+        switch_off_threshold_3:
+          name: "Device 3: Turn-off threshold (W)"
+          default: 500
+          selector:
+            number:
+              min: 0
+              max: 10000
+              unit_of_measurement: W
+
+    power_section:
+      name: "📊 Power Control Settings"
+      description: "Only fill in if operating mode = Power Control"
+      collapsed: true
+      input:
+        power_entity_1:
+          name: Device 1 (Power Entity)
+          default: ""
+          selector:
+            entity:
+              domain:
+                - number
+                - input_number
+        power_priority_1:
+          name: "Device 1: Priority"
+          description: "1 = highest priority (controlled first)"
+          default: 1
+          selector:
+            number:
+              min: 1
+              max: 3
+        power_entity_min_1:
+          name: "Device 1: Minimum Power (W)"
+          default: 100
+          selector:
+            number:
+              min: 0
+              max: 10000
+              unit_of_measurement: W
+        power_entity_max_1:
+          name: "Device 1: Maximum Power (W)"
+          default: 2000
+          selector:
+            number:
+              min: 0
+              max: 10000
+              unit_of_measurement: W
+        power_entity_2:
+          name: Device 2 (Power Entity)
+          default: ""
+          selector:
+            entity:
+              domain:
+                - number
+                - input_number
+        power_priority_2:
+          name: "Device 2: Priority"
+          description: "1 = highest priority"
+          default: 2
+          selector:
+            number:
+              min: 1
+              max: 3
+        power_entity_min_2:
+          name: "Device 2: Minimum Power (W)"
+          default: 200
+          selector:
+            number:
+              min: 0
+              max: 10000
+              unit_of_measurement: W
+        power_entity_max_2:
+          name: "Device 2: Maximum Power (W)"
+          default: 1500
+          selector:
+            number:
+              min: 0
+              max: 10000
+              unit_of_measurement: W
+        power_entity_3:
+          name: Device 3 (Power Entity)
+          default: ""
+          selector:
+            entity:
+              domain:
+                - number
+                - input_number
+        power_priority_3:
+          name: "Device 3: Priority"
+          description: "1 = highest priority"
+          default: 3
+          selector:
+            number:
+              min: 1
+              max: 3
+        power_entity_min_3:
+          name: "Device 3: Minimum Power (W)"
+          default: 300
+          selector:
+            number:
+              min: 0
+              max: 10000
+              unit_of_measurement: W
+        power_entity_max_3:
+          name: "Device 3: Maximum Power (W)"
+          default: 1000
+          selector:
+            number:
+              min: 0
+              max: 10000
+              unit_of_measurement: W
+
+mode: restart
+
+trigger:
+  - platform: state
+    entity_id: !input grid_power_sensor
+    not_to:
+      - "unavailable"
+      - "unknown"
+    not_from:
+      - "unavailable"
+      - "unknown"
+
+variables:
+  # ── Operating Mode ──
+  mode: !input operation_mode
+
+  # ── Base Sensors (first, as they are referenced in templates) ──
+  base_grid_power_sensor: !input grid_power_sensor
+  base_inverter_power_sensor: !input inverter_power_sensor
+  buffer_w: !input buffer
+
+  # ── Current Values ──
+  p_solar: "{{ states(base_inverter_power_sensor) | float(0) }}"
+  p_grid: "{{ states(base_grid_power_sensor) | float(0) }}"
+  # Surplus: positive = export available, negative = grid import
+  surplus: "{{ (p_grid * -1) | round(0) }}"
+
+  # ── Inverter Limit Variables ──
+  base_dtu_limit_number: !input dtu_limit_number
+  max_w: !input max_power
+  min_w: !input min_power
+  hysteresis_w: !input hysteresis
+  current_limit: >
+    {% if base_dtu_limit_number %}
+      {{ states(base_dtu_limit_number) | float(0) }}
+    {% else %}0{% endif %}
+  target_limit: >
+    {% set calc = (current_limit + p_grid - buffer_w) | round(0) %}
+    {{ [min_w, [calc, max_w] | min] | max }}
+
+  # ── Device On/Off Variables ──
+  switch_devices: >
+    {% set devices = [] %}
+    {% if switch_entity_1 %}
+      {% set devices = devices + [{'entity_id': switch_entity_1, 'on_threshold': switch_on_threshold_1, 'off_threshold': switch_off_threshold_1, 'priority': switch_priority_1}] %}
+    {% endif %}
+    {% if switch_entity_2 %}
+      {% set devices = devices + [{'entity_id': switch_entity_2, 'on_threshold': switch_on_threshold_2, 'off_threshold': switch_off_threshold_2, 'priority': switch_priority_2}] %}
+    {% endif %}
+    {% if switch_entity_3 %}
+      {% set devices = devices + [{'entity_id': switch_entity_3, 'on_threshold': switch_on_threshold_3, 'off_threshold': switch_off_threshold_3, 'priority': switch_priority_3}] %}
+    {% endif %}
+    {{ devices | sort(attribute='priority') }}
+  switch_entity_1: !input switch_entity_1
+  switch_priority_1: !input switch_priority_1
+  switch_on_threshold_1: !input switch_on_threshold_1
+  switch_off_threshold_1: !input switch_off_threshold_1
+  switch_entity_2: !input switch_entity_2
+  switch_priority_2: !input switch_priority_2
+  switch_on_threshold_2: !input switch_on_threshold_2
+  switch_off_threshold_2: !input switch_off_threshold_2
+  switch_entity_3: !input switch_entity_3
+  switch_priority_3: !input switch_priority_3
+  switch_on_threshold_3: !input switch_on_threshold_3
+  switch_off_threshold_3: !input switch_off_threshold_3
+
+  # ── Power Control Variables ──
+  power_devices: >
+    {% set devices = [] %}
+    {% if power_entity_1 %}
+      {% set devices = devices + [{'entity_id': power_entity_1, 'min_power': power_entity_min_1, 'max_power': power_entity_max_1, 'priority': power_priority_1}] %}
+    {% endif %}
+    {% if power_entity_2 %}
+      {% set devices = devices + [{'entity_id': power_entity_2, 'min_power': power_entity_min_2, 'max_power': power_entity_max_2, 'priority': power_priority_2}] %}
+    {% endif %}
+    {% if power_entity_3 %}
+      {% set devices = devices + [{'entity_id': power_entity_3, 'min_power': power_entity_min_3, 'max_power': power_entity_max_3, 'priority': power_priority_3}] %}
+    {% endif %}
+    {{ devices | sort(attribute='priority') }}
+  power_entity_1: !input power_entity_1
+  power_priority_1: !input power_priority_1
+  power_entity_min_1: !input power_entity_min_1
+  power_entity_max_1: !input power_entity_max_1
+  power_entity_2: !input power_entity_2
+  power_priority_2: !input power_priority_2
+  power_entity_min_2: !input power_entity_min_2
+  power_entity_max_2: !input power_entity_max_2
+  power_entity_3: !input power_entity_3
+  power_priority_3: !input power_priority_3
+  power_entity_min_3: !input power_entity_min_3
+  power_entity_max_3: !input power_entity_max_3
+
+  available_surplus: "{{ (surplus - buffer_w) | round(0) }}"
+
+action:
+  - choose:
+      # ── Mode 1: Inverter Limit (Zero Export) ──
+      - conditions:
+          - condition: template
+            value_template: "{{ mode == 'wr_limit' }}"
+        sequence:
+          - condition: template
+            value_template: >
+              {{ p_solar > 0 and (current_limit - target_limit) | abs > hysteresis_w }}
+          - action: number.set_value
+            target:
+              entity_id: 
+                - !input dtu_limit_number
+            data:
+              value: "{{ target_limit }}"
+
+      # ── Mode 2: Device On/Off ──
+      - conditions:
+          - condition: template
+            value_template: "{{ mode == 'switch_device' }}"
+        sequence:
+          - variables:
+              sorted_switches: "{{ switch_devices | sort(attribute='priority') }}"
+          - repeat:
+              for_each: "{{ sorted_switches }}"
+              sequence:
+                - variables:
+                    higher_priority_on: >
+                      {% set higher_on = false %}
+                      {% for dev in sorted_switches %}
+                        {% if dev.priority < item.priority and is_state(dev.entity_id, 'on') %}
+                          {% set higher_on = true %}
+                        {% endif %}
+                      {% endfor %}
+                      {{ higher_on }}
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ p_solar > 0 and surplus >= item.on_threshold and not is_state(item.entity_id, 'on') and (item.priority == 1 or higher_priority_on) }}"
+                      sequence:
+                        - action: homeassistant.turn_on
+                          target:
+                            entity_id: "{{ item.entity_id }}"
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ (surplus < item.off_threshold or p_solar <= 0) and is_state(item.entity_id, 'on') }}"
+                      sequence:
+                        - action: homeassistant.turn_off
+                          target:
+                            entity_id: "{{ item.entity_id }}"
+
+      # ── Mode 3: Power Control ──
+      - conditions:
+          - condition: template
+            value_template: "{{ mode == 'power_control' }}"
+        sequence:
+          - variables:
+              sorted_power: "{{ power_devices | sort(attribute='priority') }}"
+              remaining_surplus: "{{ (surplus - buffer_w) | round(0) }}"
+          - repeat:
+              for_each: "{{ sorted_power }}"
+              sequence:
+                - variables:
+                    higher_priority_maxed: >
+                      {% set all_maxed = true %}
+                      {% for dev in sorted_power %}
+                        {% if dev.priority < item.priority %}
+                          {% if states(dev.entity_id) | float(0) < dev.max_power - 10 %}
+                            {% set all_maxed = false %}
+                          {% endif %}
+                        {% endif %}
+                      {% endfor %}
+                      {{ all_maxed }}
+                    target_p: >
+                      {% set available = remaining_surplus %}
+                      {% if p_solar <= 0 or available < item.min_power %}
+                        0
+                      {% elif item.priority == 1 or higher_priority_maxed %}
+                        {{ [available, item.max_power] | min }}
+                      {% else %}
+                        0
+                      {% endif %}
+                    current_power: "{{ states(item.entity_id) | float(0) }}"
+                - condition: template
+                  value_template: "{{ (current_power - target_p) | abs > buffer_w }}"
+                - action: number.set_value
+                  target:
+                    entity_id: "{{ item.entity_id }}"
+                  data:
+                    value: "{{ target_p }}"
