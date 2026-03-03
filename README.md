@@ -2,6 +2,8 @@
 
 Dieser Blueprint steuert den Solar-Überschuss auf drei verschiedene Arten. Er reagiert auf Änderungen des Netzbezugs-Sensors und passt entweder das Wechselrichter-Limit an, schaltet Geräte ein/aus oder regelt die Leistung von Verbrauchern stufenlos.
 
+Ich habe ihn für meine opendtu entworfen, um die diese in Leistung (Wirkungsgrad) regeln zu können. Zusätzlich kann können nun auch Geräte mit dem Überschuss versorgt werden, statt nur den Wirkungsgrad des WR einzustellen.
+
 ---
 
 ## Installation
